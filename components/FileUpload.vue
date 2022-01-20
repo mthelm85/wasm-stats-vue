@@ -4,12 +4,11 @@
       <v-col>
           <v-file-input
             accept=".csv"
-            label="File"
+            label="Upload CSV File"
             v-model="file"
             @change="readFile(file)"
             :clearable=false
           ></v-file-input>
-          <v-btn @click="filter">Filter</v-btn>
       </v-col>
     </v-row>
   </v-container>
@@ -36,30 +35,36 @@ computed: {
     }
 },
 
-async created () {
-    let wasm = await import('wasm-stats')
-    this.wasm = wasm
-},
-
 methods: {
-    filter () {
-        let res = this.wasm.lin_reg_qr(this.contents.slice(1, this.contents.length + 1))  
-        this.coefs = res
-        console.log(this.coefs)
+    JSON (file) {
+        return new Promise((resolve, reject) => {
+            Papa.parse(file, {
+                skipEmptyLines: true,
+                dynamicTyping: true,
+                worker: true,
+                complete: function (results, _file) {
+                    resolve(results)
+                },
+                error: function (err, _file) {
+                    reject(err)
+                }
+            })
+        })
     },
 
-    async JSON (file) {
-    let parsed = await Papa.parse(file, { skipEmptyLines: true, dynamicTyping: true })
-    return parsed.data
-    },
+    ...mapMutations({
+        toggleLoadingData: 'toggleLoadingData'
+    }),
 
     readFile (file) {
-    const reader = new FileReader()
-    reader.onload = async e => {
-        let contents = await this.JSON(e.target.result)
-        this.$store.commit('fileUpload/set', contents)
-    }
-    reader.readAsText(file)
+        this.toggleLoadingData()
+        const reader = new FileReader()
+        reader.onload = async e => {
+            let contents = await this.JSON(e.target.result)
+            this.$store.commit('fileUpload/setContents', contents.data)
+            this.toggleLoadingData()
+        }
+        reader.readAsText(file)
     },
 }
 }

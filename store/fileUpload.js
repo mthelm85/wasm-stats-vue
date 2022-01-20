@@ -1,12 +1,9 @@
 export const state = () => ({
-  contents: null
+  contents: null,
 })
 
 export const mutations = {
-  set(state, contents) {
+  setContents(state, contents) {
     state.contents = contents
   },
-  remove(state) {
-    state.contents = null
-  }
 }
