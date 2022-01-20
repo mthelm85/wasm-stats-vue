@@ -6,8 +6,8 @@
             accept=".csv"
             label="Upload CSV File"
             v-model="file"
-            @change="readFile(file)"
-            :clearable=false
+            @change="checkFile(file)"
+            :clearable="false"
           ></v-file-input>
       </v-col>
     </v-row>
@@ -22,7 +22,6 @@ name: 'FileUpload',
 
 data: () => ({
     file: null,
-    coefs: null
 }),
 
 computed: {
@@ -30,13 +29,34 @@ computed: {
         return this.$store.state.fileUpload.contents
     },
 
-    matrix () {
-        return this.$store.state.fileUpload.contents.slice(1, this.$store.state.fileUpload.contents.length + 1)
+    proceed () {
+        return this.$store.state.fileUpload.fileSizeAlert
     }
 },
 
 methods: {
-    JSON (file) {
+    ...mapMutations({
+        toggleLoadingData: 'toggleLoadingData'
+    }),
+
+    async checkFile (file) {
+        this.file = file
+        let size = file.size / 1024 / 1024
+        let preview = null
+        let allNumeric = null
+        if (size > 100) {
+            this.$store.commit('fileUpload/setFileSize', size)
+            this.$store.commit('fileUpload/toggleFileSizeAlert')
+            preview = await this.previewFile(file)
+            preview.data.slice(1, 11).every(arr => arr.every(el => typeof el == 'number'))
+        } else if (!allNumeric) {
+            this.$store.commit('fileUpload/toggleDataTypeAlert')
+        } else {
+            this.readFile(file)
+        }
+    },
+
+    parseFile (file) {
         return new Promise((resolve, reject) => {
             Papa.parse(file, {
                 skipEmptyLines: true,
@@ -52,20 +72,60 @@ methods: {
         })
     },
 
-    ...mapMutations({
-        toggleLoadingData: 'toggleLoadingData'
-    }),
+    parseFileStreaming (file) {
+        return new Promise((resolve, reject) => {
+            Papa.parse(file, {
+                skipEmptyLines: true,
+                dynamicTyping: true,
+                complete: function (_results, _file) {
+                    resolve('Ok')
+                },
+                error: function (err, _file) {
+                    reject(err)
+                },
+                step: this.step,
+                worker: true,
+            })
+        })
+    },
 
-    readFile (file) {
-        this.toggleLoadingData()
-        const reader = new FileReader()
-        reader.onload = async e => {
-            let contents = await this.JSON(e.target.result)
+    previewFile (file) {
+        return new Promise((resolve, reject) => {
+            Papa.parse(file, {
+                skipEmptyLines: true,
+                dynamicTyping: true,
+                complete: function (results, _file) {
+                    resolve(results)
+                },
+                error: function (err, _file) {
+                    reject(err)
+                },
+                preview: 11,
+                worker: true,
+            })
+        })
+    },
+
+    async readFile (file) {
+        if (!this.$store.state.fileUpload.fileSizeAlert) {
+            this.toggleLoadingData()
+            let contents = await this.parseFile(file)
             this.$store.commit('fileUpload/setContents', contents.data)
             this.toggleLoadingData()
         }
-        reader.readAsText(file)
     },
+
+    step (results, _parser) {
+        this.$store.commit('fileUpload/addContents', results.data) 
+    },
+},
+
+watch: {
+    proceed: function (n, o) {
+        if (n == false) {
+            this.readFile(this.file)
+        }
+    }
 }
 }
 </script>

@@ -27,7 +27,7 @@
                 </v-icon>
                 {{ numRows }} Rows
             </v-chip>
-            <div class="my-6" v-if="contents">
+            <div class="my-6" v-if="contents.length > 0">
                 <v-chip
                 class="ma-2"
                 color="purple"
@@ -61,6 +61,8 @@
                 indeterminate
             ></v-progress-circular>
         </v-overlay>
+        <DialogFileSize />
+        <DialogDataTypes />
     </v-card>
 </template>
 <script>
@@ -74,8 +76,7 @@ data: () => ({
 
 computed: {
     contents () {
-        let contents = this.$store.state.fileUpload.contents
-        return contents ? contents : null
+        return this.$store.state.fileUpload.contents
     },
 
     loading () {
@@ -83,15 +84,15 @@ computed: {
     },
 
     numCols () {
-        return this.contents ? this.contents[0].length : 0
+        return this.contents.length > 0 ? this.contents[0].length : 0
     },
 
     numRows () {
-        return this.contents ? this.contents.length : 0
+        return this.contents.length > 0 ? this.contents.length : 0
     },
 
     tags () {
-        return this.contents ? this.contents[0] : []
+        return this.contents.length > 0 ? this.contents[0] : []
     }
 }
 

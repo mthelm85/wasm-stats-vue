@@ -3,10 +3,10 @@
       <v-list-item>
         <v-list-item-content>
           <v-list-item-title class="text-h6">
-            Sagacious
+            WASM Stats
           </v-list-item-title>
           <v-list-item-subtitle>
-            Analytics For All
+            WASM-powered computations
           </v-list-item-subtitle>
         </v-list-item-content>
       </v-list-item>
@@ -43,9 +43,10 @@ export default {
 
     data: () => ({
         items: [
+            { title: 'Home', icon: 'mdi-home', to: '/' },
             { title: 'Scalar Statistics', icon: 'mdi-alphabet-greek', to: 'ScalarStats' },
             { title: 'Linear Regression', icon: 'mdi-chart-scatter-plot', to: 'Regression' },
-            { title: 'About', icon: 'mdi-help-box', to: '/' },
+            // { title: 'About', icon: 'mdi-help-box', to: '/' },
         ],
         right: null,
     }),
